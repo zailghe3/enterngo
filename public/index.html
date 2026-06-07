@@ -53,6 +53,7 @@
                 Provider
                 <select id="providerSelect">
                   <option value="auto">Auto</option>
+                  <option value="google-translate">Google Translate (free)</option>
                   <option value="openai-compatible">OpenAI-compatible</option>
                   <option value="libretranslate">LibreTranslate</option>
                 </select>
@@ -67,7 +68,7 @@
       <section class="card setup">
         <h2>Setup notes</h2>
         <ul>
-          <li>Set <code>TARGET_SESSION_COOKIE</code> to allow this server to fetch authenticated target-page HTML.</li>
+          <li>Google Translate is available by default through the free public endpoint; set <code>TARGET_SESSION_COOKIE</code> to allow this server to fetch authenticated target-page HTML.</li>
           <li>Set <code>TRANSLATION_API_URL</code> and <code>TRANSLATION_API_KEY</code> for an OpenAI-compatible chat-completions endpoint.</li>
           <li>Alternatively set <code>LIBRETRANSLATE_URL</code> and optional <code>LIBRETRANSLATE_API_KEY</code>.</li>
           <li>OpenXLab access keys can be stored as <code>OPENXLAB_AK</code> and <code>OPENXLAB_SK</code>; wire them to a compatible endpoint once your account/API route is confirmed.</li>

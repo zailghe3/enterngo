@@ -1,5 +1,74 @@
 const MAX_TEXT_LENGTH = 12000;
 
+const GOOGLE_TRANSLATE_DEFAULT_URL = 'https://translate.googleapis.com';
+const GOOGLE_TRANSLATE_CHUNK_LENGTH = 4000;
+const LANGUAGE_CODES = new Map([
+  ['auto', 'auto'],
+  ['chinese', 'zh-CN'],
+  ['simplified chinese', 'zh-CN'],
+  ['traditional chinese', 'zh-TW'],
+  ['english', 'en'],
+  ['japanese', 'ja'],
+  ['korean', 'ko'],
+  ['spanish', 'es'],
+  ['french', 'fr'],
+  ['german', 'de'],
+  ['portuguese', 'pt'],
+  ['russian', 'ru']
+]);
+
+function resolveGoogleLanguageCode(language, fallback = 'auto') {
+  if (typeof language !== 'string' || !language.trim()) {
+    return fallback;
+  }
+
+  const normalized = language.trim().toLowerCase();
+  return LANGUAGE_CODES.get(normalized) || normalized;
+}
+
+function chunkText(text, maxLength) {
+  if (text.length <= maxLength) {
+    return [text];
+  }
+
+  const chunks = [];
+  let remaining = text;
+
+  while (remaining.length > maxLength) {
+    const slice = remaining.slice(0, maxLength + 1);
+    const breakAt = Math.max(
+      slice.lastIndexOf('\n'),
+      slice.lastIndexOf('。'),
+      slice.lastIndexOf('！'),
+      slice.lastIndexOf('？'),
+      slice.lastIndexOf('.'),
+      slice.lastIndexOf('!'),
+      slice.lastIndexOf('?'),
+      slice.lastIndexOf(' ')
+    );
+    const chunkEnd = breakAt > Math.floor(maxLength * 0.5) ? breakAt + 1 : maxLength;
+    chunks.push(remaining.slice(0, chunkEnd).trim());
+    remaining = remaining.slice(chunkEnd).trim();
+  }
+
+  if (remaining) {
+    chunks.push(remaining);
+  }
+
+  return chunks;
+}
+
+function parseGoogleTranslatePayload(payload) {
+  if (!Array.isArray(payload?.[0])) {
+    return '';
+  }
+
+  return payload[0]
+    .map((segment) => (Array.isArray(segment) && typeof segment[0] === 'string' ? segment[0] : ''))
+    .join('')
+    .trim();
+}
+
 export async function parseRequestBody(req) {
   const chunks = [];
   let size = 0;
@@ -79,6 +148,39 @@ function buildPrompt(text, targetLanguage) {
   ].join('\n');
 }
 
+async function translateWithGoogleTranslate({ text, sourceLanguage, targetLanguage, fetchImpl, env }) {
+  const baseUrl = env.GOOGLE_TRANSLATE_URL || GOOGLE_TRANSLATE_DEFAULT_URL;
+  const source = resolveGoogleLanguageCode(sourceLanguage, 'auto');
+  const target = resolveGoogleLanguageCode(targetLanguage, 'en');
+  const translatedChunks = [];
+  const raw = [];
+
+  for (const chunk of chunkText(text, GOOGLE_TRANSLATE_CHUNK_LENGTH)) {
+    const url = new URL('/translate_a/single', baseUrl);
+    url.searchParams.set('client', 'gtx');
+    url.searchParams.set('sl', source);
+    url.searchParams.set('tl', target);
+    url.searchParams.append('dt', 't');
+    url.searchParams.set('q', chunk);
+
+    const response = await fetchImpl(url);
+
+    if (!response.ok) {
+      throw new Error(`Google Translate failed with HTTP ${response.status}`);
+    }
+
+    const payload = await response.json();
+    raw.push(payload);
+    translatedChunks.push(parseGoogleTranslatePayload(payload));
+  }
+
+  return {
+    provider: 'google-translate',
+    translatedText: translatedChunks.filter(Boolean).join('\n\n'),
+    raw: raw.length === 1 ? raw[0] : raw
+  };
+}
+
 async function translateWithLibreTranslate({ text, sourceLanguage, targetLanguage, fetchImpl, env }) {
   const baseUrl = env.LIBRETRANSLATE_URL;
   if (!baseUrl) {
@@ -147,6 +249,10 @@ export async function translateText({ text, targetLanguage = 'English', sourceLa
   const normalizedText = normalizeInputText(text);
   const providerName = provider.toLowerCase();
 
+  if (providerName === 'google-translate' || providerName === 'google') {
+    return translateWithGoogleTranslate({ text: normalizedText, sourceLanguage, targetLanguage, fetchImpl, env });
+  }
+
   if (providerName === 'libretranslate') {
     const result = await translateWithLibreTranslate({ text: normalizedText, sourceLanguage, targetLanguage, fetchImpl, env });
     if (!result) {
@@ -167,6 +273,14 @@ export async function translateText({ text, targetLanguage = 'English', sourceLa
     return result;
   }
 
+  const providerErrors = [];
+
+  try {
+    return await translateWithGoogleTranslate({ text: normalizedText, sourceLanguage, targetLanguage, fetchImpl, env });
+  } catch (error) {
+    providerErrors.push(`Google Translate: ${error.message}`);
+  }
+
   const openAiCompatible = await translateWithOpenAiCompatible({ text: normalizedText, targetLanguage, fetchImpl, env });
   if (openAiCompatible) {
     return openAiCompatible;
@@ -180,6 +294,6 @@ export async function translateText({ text, targetLanguage = 'English', sourceLa
   return {
     provider: 'local-preview',
     translatedText: normalizedText,
-    warning: 'No translation provider is configured yet. Set TRANSLATION_API_URL plus TRANSLATION_API_KEY, or LIBRETRANSLATE_URL, to enable automatic English translation.'
+    warning: `Automatic translation is unavailable. ${providerErrors.join('; ') || 'No translation provider could be reached.'}`
   };
 }
