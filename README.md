@@ -7,10 +7,9 @@ EnterNGo is a small web app for translating the visible reasoning/thinking text 
 - Opens a side-by-side translator UI.
 - Lets you paste the Go AI's thinking text from the source app.
 - Can fetch the target page server-side if you provide an authenticated session cookie.
-- Translates through either:
-  - an OpenAI-compatible chat-completions endpoint, or
-  - a LibreTranslate endpoint.
-- Shows a local preview/warning when no translation provider is configured, so the UI remains usable during setup.
+- Translates through the free Google Translate public endpoint by default.
+- Can optionally fall back to an OpenAI-compatible chat-completions endpoint or a LibreTranslate endpoint.
+- Shows a local preview/warning when automatic translation is unavailable, so the UI remains usable during setup.
 
 ## Run locally
 
@@ -22,7 +21,9 @@ Then open <http://localhost:3000>.
 
 ## Configuration
 
-All configuration is optional for local UI development, but real translation needs at least one provider.
+Google Translate works by default with no API key through the free public endpoint at <https://translate.googleapis.com>. You can override the base URL for testing or proxying with `GOOGLE_TRANSLATE_URL`.
+
+Optional fallback providers can still be configured with the settings below.
 
 ### Translation through an OpenAI-compatible endpoint
 

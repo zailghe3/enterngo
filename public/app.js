@@ -9,6 +9,7 @@ function renderStatus(config) {
   const items = [
     ['Target app', config.targetUrl],
     ['Authenticated fetch', config.serverFetchAuthConfigured ? 'Configured' : 'Needs TARGET_SESSION_COOKIE'],
+    ['Google Translate', config.googleTranslateConfigured ? 'Available without an API key' : 'Unavailable'],
     ['OpenAI-compatible translation', config.openAiCompatibleConfigured ? 'Configured' : 'Needs API URL + key'],
     ['LibreTranslate', config.libreTranslateConfigured ? 'Configured' : 'Needs LibreTranslate URL'],
     ['OpenXLab keys', config.openXLabCredentialsConfigured ? 'Configured' : 'Optional / not wired yet']

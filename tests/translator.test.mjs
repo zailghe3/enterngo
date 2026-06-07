@@ -13,17 +13,35 @@ test('normalizeInputText trims and rejects blank text', () => {
   assert.throws(() => normalizeInputText('   '), /Text is required/);
 });
 
-test('translateText returns local preview when no provider is configured', async () => {
+test('translateText uses the free Google Translate endpoint by default', async () => {
   const result = await translateText({
     text: '黑棋应该先手压迫白棋。',
     env: {},
-    fetchImpl: async () => {
-      throw new Error('fetch should not be called');
+    fetchImpl: async (url) => {
+      assert.equal(url.origin, 'https://translate.googleapis.com');
+      assert.equal(url.pathname, '/translate_a/single');
+      assert.equal(url.searchParams.get('client'), 'gtx');
+      assert.equal(url.searchParams.get('sl'), 'auto');
+      assert.equal(url.searchParams.get('tl'), 'en');
+      assert.equal(url.searchParams.get('q'), '黑棋应该先手压迫白棋。');
+      return Response.json([[[ 'Black should pressure White in sente.', '黑棋应该先手压迫白棋。' ]]]);
     }
   });
 
+  assert.equal(result.provider, 'google-translate');
+  assert.equal(result.translatedText, 'Black should pressure White in sente.');
+});
+
+
+test('translateText returns local preview when free Google Translate is unavailable and no fallback provider is configured', async () => {
+  const result = await translateText({
+    text: '黑棋应该先手压迫白棋。',
+    env: {},
+    fetchImpl: async () => new Response('rate limited', { status: 429 })
+  });
+
   assert.equal(result.provider, 'local-preview');
-  assert.match(result.warning, /No translation provider/);
+  assert.match(result.warning, /Google Translate failed with HTTP 429/);
 });
 
 test('translateText can call an OpenAI-compatible endpoint', async () => {

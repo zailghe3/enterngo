@@ -36,6 +36,7 @@ function getProviderStatus() {
   return {
     targetUrl: TARGET_URL,
     serverFetchAuthConfigured: Boolean(process.env.TARGET_SESSION_COOKIE),
+    googleTranslateConfigured: true,
     libreTranslateConfigured: Boolean(process.env.LIBRETRANSLATE_URL),
     openAiCompatibleConfigured: Boolean(process.env.TRANSLATION_API_URL && process.env.TRANSLATION_API_KEY),
     openXLabCredentialsConfigured: Boolean(process.env.OPENXLAB_AK && process.env.OPENXLAB_SK)
