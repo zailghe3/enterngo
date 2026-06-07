@@ -1,0 +1,12 @@
+{
+  "name": "enterngo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs",
+    "test": "node --test",
+    "lint": "node --check server.mjs && node --check tests/*.test.mjs"
+  }
+}

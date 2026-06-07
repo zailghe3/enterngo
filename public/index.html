@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EnterNGo Translator</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">EnterNGo</p>
+          <h1>Translate InternThinker Go AI thinking into English</h1>
+          <p class="lede">
+            Open the original Go player, copy its visible thinking text, and translate it here with a configured
+            translation provider. If you can provide an authenticated session cookie, the server can also fetch the
+            target page as a starting point.
+          </p>
+        </div>
+        <a class="target-link" href="https://chat.intern-ai.org.cn/internthinker/go-game/" target="_blank" rel="noreferrer">
+          Open Go app ↗
+        </a>
+      </section>
+
+      <section class="card status-card" aria-live="polite">
+        <h2>Connection status</h2>
+        <dl id="statusList" class="status-list">
+          <div><dt>Target</dt><dd>Loading…</dd></div>
+        </dl>
+      </section>
+
+      <section class="workspace">
+        <article class="card panel">
+          <div class="panel-header">
+            <div>
+              <h2>Original thinking</h2>
+              <p>Paste Chinese/Japanese/Korean Go commentary or fetch page text if server authentication is configured.</p>
+            </div>
+            <button id="fetchPageButton" type="button" class="secondary">Fetch target page text</button>
+          </div>
+          <textarea id="sourceText" spellcheck="false" placeholder="Paste the AI player's thinking here…"></textarea>
+        </article>
+
+        <article class="card panel">
+          <div class="panel-header">
+            <div>
+              <h2>English translation</h2>
+              <p>Configured providers are tried automatically, or choose one explicitly.</p>
+            </div>
+            <div class="controls">
+              <label>
+                Provider
+                <select id="providerSelect">
+                  <option value="auto">Auto</option>
+                  <option value="openai-compatible">OpenAI-compatible</option>
+                  <option value="libretranslate">LibreTranslate</option>
+                </select>
+              </label>
+              <button id="translateButton" type="button">Translate</button>
+            </div>
+          </div>
+          <output id="translationOutput" class="translation" aria-live="polite">Translation will appear here.</output>
+        </article>
+      </section>
+
+      <section class="card setup">
+        <h2>Setup notes</h2>
+        <ul>
+          <li>Set <code>TARGET_SESSION_COOKIE</code> to allow this server to fetch authenticated target-page HTML.</li>
+          <li>Set <code>TRANSLATION_API_URL</code> and <code>TRANSLATION_API_KEY</code> for an OpenAI-compatible chat-completions endpoint.</li>
+          <li>Alternatively set <code>LIBRETRANSLATE_URL</code> and optional <code>LIBRETRANSLATE_API_KEY</code>.</li>
+          <li>OpenXLab access keys can be stored as <code>OPENXLAB_AK</code> and <code>OPENXLAB_SK</code>; wire them to a compatible endpoint once your account/API route is confirmed.</li>
+        </ul>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
